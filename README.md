@@ -1,5 +1,4 @@
-# Violencia contra las Mujeres en México (2015–2025)
-### Análisis de incidencia delictiva por entidad federativa
+# Análisis de incidencia delictiva contra las mujeres por entidad federativa en México (2015–2025)
 
 > Proyecto Final · Módulo 4: Inteligencia de negocios y SQL avanzado  
 > Diplomado en Bases de Datos y Sistemas de Información — IIMAS, UNAM · 2025
@@ -166,17 +165,17 @@ Cada registro de `fact_victimas` representa el número de víctimas registradas 
                     └────────┬─────────┘
                              │
 ┌──────────────────┐  ┌──────┴───────────────────────┐  ┌──────────────────┐
-│   dim_entidad    │◄─│       fact_victimas           │─►│   dim_delito     │
-│                  │  │                               │  │                  │
-│ entidad_key PK   │  │ id_hecho PK                   │  │ delito_key PK    │
-│ clave_entidad    │  │ tiempo_key FK                 │  │ tipo_delito      │
-│ nombre_entidad   │  │ entidad_key FK                │  │ subtipo_delito   │
-│ region           │  │ delito_key FK                 │  │ bien_juridico    │
-└──────────────────┘  │                               │  │ categoria        │
-                      │ num_victimas                  │  │ es_letal         │
-                      │ fuente                        │  └──────────────────┘
-                      │ fecha_carga                   │
-                      └───────────────────────────────┘
+│   dim_entidad    │◄─│       fact_victimas          │─►│   dim_delito     │
+│                  │  │                              │  │                  │
+│ entidad_key PK   │  │ id_hecho PK                  │  │ delito_key PK    │
+│ clave_entidad    │  │ tiempo_key FK                │  │ tipo_delito      │
+│ nombre_entidad   │  │ entidad_key FK               │  │ subtipo_delito   │
+│ region           │  │ delito_key FK                │  │ bien_juridico    │
+└──────────────────┘  │                              │  │ categoria        │
+                      │ num_victimas                 │  │ es_letal         │
+                      │ fuente                       │  └──────────────────┘
+                      │ fecha_carga                  │
+                      └──────────────────────────────┘
 ```
 
 ### Decisiones de diseño
@@ -203,31 +202,11 @@ pip install pandas sqlalchemy psycopg2-binary openpyxl
 
 ### 1. Descargar el dataset
 
-1. Ir a: https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva
-2. Descargar: **"Estatal-Delitos-2015-2025"**
-3. Guardar en: `datasets/Estatal-Delitos-2015-2025.xlsx`
-
 ### 2. Crear el schema en Aurora
-
-```bash
-psql "postgresql://postgres:TU_PASSWORD@TU_HOST.rds.amazonaws.com:5432/northwind" \
-     -f scripts/01_schema_ddl.sql
-```
 
 ### 3. Correr el ETL
 
-```bash
-export AURORA_HOST=TU_HOST.rds.amazonaws.com
-export AURORA_PASSWORD=TU_PASSWORD
-
-python scripts/etl_pipeline.py
-```
-
 ### 4. Abrir el dashboard
-
-Abrir `dashboard/violencia_mujeres.pbix` en Power BI Desktop.
-
----
 
 ## SQL avanzado — técnicas aplicadas
 
@@ -334,4 +313,4 @@ Se espera identificar patrones temporales y geográficos en los delitos contra l
 
 - [SESNSP — Datos abiertos de incidencia delictiva](https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva)
 - [SESNSP — Informe de violencia contra las mujeres](https://www.gob.mx/sesnsp/documentos/informe-de-violencia-contra-las-mujeres)
-- Material del módulo 4 — IIMAS, UNAM: OLAP, ETL Python, SQL avanzado
+
