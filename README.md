@@ -154,7 +154,7 @@ Cada registro de `fact_victimas` representa el número de víctimas registradas 
                     ┌──────────────────┐
                     │   dim_tiempo     │
                     │                  │
-                    │ tiempo_key PK    │
+                    │ id_tiempo PK     │
                     │ anio             │
                     │ mes              │
                     │ nombre_mes       │
@@ -167,10 +167,10 @@ Cada registro de `fact_victimas` representa el número de víctimas registradas 
 ┌──────────────────┐  ┌──────┴───────────────────────┐  ┌──────────────────┐
 │   dim_entidad    │◄─│       fact_victimas          │─►│   dim_delito     │
 │                  │  │                              │  │                  │
-│ entidad_key PK   │  │ id_hecho PK                  │  │ delito_key PK    │
-│ clave_entidad    │  │ tiempo_key FK                │  │ tipo_delito      │
-│ nombre_entidad   │  │ entidad_key FK               │  │ subtipo_delito   │
-│ region           │  │ delito_key FK                │  │ bien_juridico    │
+│ id_entidad PK    │  │ id_hecho PK                  │  │ id_delito PK     │
+│ clave_entidad    │  │ id_tiempo FK                 │  │ tipo_delito      │
+│ nombre_entidad   │  │ id_entidad FK                │  │ subtipo_delito   │
+│ region           │  │ id_delito FK                 │  │ bien_juridico    │
 └──────────────────┘  │                              │  │ categoria        │
                       │ num_victimas                 │  │ es_letal         │
                       │ fuente                       │  └──────────────────┘
