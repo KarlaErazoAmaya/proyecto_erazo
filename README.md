@@ -41,7 +41,7 @@ La respuesta a estas preguntas permite identificar focos de atención para el di
 
 **Fuente:** Secretariado Ejecutivo del Sistema Nacional de Seguridad Pública (SESNSP)  
 **Descarga directa:** https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva  
-**Archivo:** `Estatal-Delitos-2015-2025 (Excel/CSV)`
+**Archivo:** `Estatal-Delitos-2015-2025_abr2026 (Excel/CSV)`
 
 El dataset contiene más de 8,800 registros de víctimas de feminicidio entre 2015 y 2020, además de otros delitos contra las mujeres, generando decenas de miles de observaciones para análisis temporal y geográfico.
 
