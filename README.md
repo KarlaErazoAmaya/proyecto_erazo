@@ -5,45 +5,13 @@
 
 ---
 
-## Resumen ejecutivo
-
-| Campo | Valor |
-|---|---|
-| **Pregunta analítica** | ¿Cómo ha evolucionado la incidencia de los principales delitos contra las mujeres en México entre 2015 y 2025, y qué entidades federativas presentan los mayores niveles y tendencias de crecimiento? |
-| **Dataset** | Incidencia Delictiva Estatal (SESNSP) 2015–2025 |
-| **Fuente** | [sesnsp.gob.mx — Datos abiertos de incidencia delictiva estatal](https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva) |
-| **Modelo** | Estrella: 1 fact + 3 dimensiones (tiempo, entidad, delito) |
-| **Infraestructura** | AWS Aurora PostgreSQL — schema `violencia_dwh` |
-| **ETL** | Python (pandas + SQLAlchemy) |
-| **SQL avanzado** | Window functions (`RANK`, `LAG`), CTEs, funciones analíticas (`PERCENTILE_CONT`) |
-| **Dashboard** | Power BI |
-
----
-
-## Problema y motivación
-
-La violencia contra las mujeres es uno de los principales problemas de seguridad y derechos humanos en México. En los últimos años, ha aumentado la cantidad de delitos como el feminicidio, el homicidio doloso, las lesiones dolosas y la violencia familiar.
-
-Las autoridades publican información sobre la incidencia delictiva de forma regular. Sin embargo, el gran volumen de datos dificulta la identificación de patrones territoriales y temporales.
-
-Este proyecto buscará responder cuatro preguntas:
-
-1. ¿Qué entidades federativas concentran el mayor número de delitos contra las mujeres?
-2. ¿Cómo ha evolucionado la incidencia de estos delitos entre 2015 y 2025?
-3. ¿Hay estados donde el crecimiento de la violencia ha sido significativamente mayor que el promedio nacional? 
-4. ¿Cuáles son los delitos que presentan las tendencias de crecimiento más preocupantes?
-
-La respuesta a estas preguntas permite identificar focos de atención para el diseño de políticas públicas y estrategias de prevención.
-
----
-
 ## Origen de los datos
 
 **Fuente:** Secretariado Ejecutivo del Sistema Nacional de Seguridad Pública (SESNSP)  
 **Descarga directa:** https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva  
-**Archivo:** `Estatal-Delitos-2015-2025_abr2026 (Excel/CSV)`
+**Archivo:** `Estatal-Delitos-2015-2025_abr2026.csv`
 
-El dataset contiene más de 8,800 registros de víctimas de feminicidio entre 2015 y 2020, además de otros delitos contra las mujeres, generando decenas de miles de observaciones para análisis temporal y geográfico.
+El dataset contiene más de 8,800 registros de feminicidio entre 2015 y 2020, además de otros delitos contra las mujeres para las 32 entidades federativas, generando decenas de miles de observaciones para análisis temporal y geográfico.
 
 ### Estructura del archivo fuente
 
@@ -52,7 +20,7 @@ El archivo original contiene **todos los delitos del fuero común** con la sigui
 | Columna | Descripción |
 |---|---|
 | `Año` | Año del registro (2015–2025) |
-| `Clave_Entidad` | Clave INEGI de la entidad federativa (1–32) |
+| `Clave_Ent` | Clave INEGI de la entidad federativa (1–32) |
 | `Entidad` | Nombre de la entidad federativa |
 | `Bien jurídico afectado` | Categoría jurídica (ej. "La vida y la integridad corporal") |
 | `Tipo de delito` | Delito específico (ej. "Feminicidio", "Homicidio", "Lesiones") |
@@ -63,8 +31,6 @@ El archivo original contiene **todos los delitos del fuero común** con la sigui
 El ETL filtra únicamente los subtipos relevantes para el análisis de violencia contra las mujeres.
 
 ### Delitos seleccionados para el análisis
-
-Como el dataset no contiene información individual de las víctimas, el análisis se realiza agregado mensual por entidad federativa y tipo de delito. 
 
 | Tipo de delito | Subtipo | Categoría analítica |
 |---|---|---|
@@ -78,6 +44,11 @@ Como el dataset no contiene información individual de las víctimas, el anális
 | Violencia de género | Violencia de género en todas sus modalidades | Violencia no letal |
 | Acoso sexual | Acoso sexual | Violencia no letal |
 | Hostigamiento sexual | Hostigamiento sexual | Violencia no letal |
+| Abuso sexual | Abuso sexual | Violencia no letal |
+| Violación | Violación simple | Violencia no letal |
+| Violación | Violación equiparada | Violencia no letal |
+
+13 subtipos en total, correspondientes a los 13 registros de `dim_delito` en Aurora.
 
 ### Flujo end-to-end
 
@@ -86,12 +57,12 @@ Como el dataset no contiene información individual de las víctimas, el anális
 │  SESNSP (portal público)                     │
 │  gob.mx/sesnsp/datos-abiertos-incidencia     │
 │                                              │
-│  • Excel/CSV con todos los delitos           │
+│  • CSV con todos los delitos                 │
 │    del fuero común 2015–2025                 │
 │  • Columnas: Año, Entidad, Bien jurídico,    │
 │    Tipo, Subtipo, Modalidad, Ene–Dic         │
 └──────────────────────┬───────────────────────┘
-                       │  pandas read_excel / read_csv
+                       │  pandas read_csv
                        ▼
 ┌──────────────────────────────────────────────┐
 │  ETL Python — etl_pipeline.py                │
@@ -128,16 +99,23 @@ Como el dataset no contiene información individual de las víctimas, el anális
 
 ```
 proyecto-violencia-mujeres/
-├── README.md                          ← este archivo
+├── README.md
 ├── datasets/
-│   └── README_datasets.md             ← instrucciones de descarga
+│   └── Estatal-Delitos-2015-2025_abr2026.csv
 ├── scripts/
-│   ├── 01_schema_ddl.sql              ← creación del modelo dimensional
-│   └── etl_pipeline.py                ← ETL completo Extract → Transform → Load
+│   ├── 01_schema_ddl.sql
+│   ├── etl_pipeline.py
+│   └── queries_analiticas.sql
 ├── dashboard/
-│   └── violencia_mujeres.pbix         ← dashboard Power BI
+│   ├── violencia_mujeres.pbix
+│   └── data/
+│       ├── evolucion_feminicidios.csv
+│       ├── top10_entidades.csv
+│       ├── mapa_entidades.csv
+│       ├── variacion_anual.csv
+│       └── crecimiento_delitos.csv
 └── docs/
-    └── diagrama_modelo.svg            ← diagrama del esquema estrella
+    └── diagrama_modelo.png
 ```
 
 ---
@@ -154,7 +132,7 @@ Cada registro de `fact_victimas` representa el número de víctimas registradas 
                     ┌──────────────────┐
                     │   dim_tiempo     │
                     │                  │
-                    │ id_tiempo PK     │
+                    │ id_tiempo PK    │
                     │ anio             │
                     │ mes              │
                     │ nombre_mes       │
@@ -165,17 +143,17 @@ Cada registro de `fact_victimas` representa el número de víctimas registradas 
                     └────────┬─────────┘
                              │
 ┌──────────────────┐  ┌──────┴───────────────────────┐  ┌──────────────────┐
-│   dim_entidad    │◄─│       fact_victimas          │─►│   dim_delito     │
-│                  │  │                              │  │                  │
-│ id_entidad PK    │  │ id_hecho PK                  │  │ id_delito PK     │
+│   dim_entidad    │◄─│       fact_victimas           │─►│   dim_delito     │
+│                  │  │                               │  │                  │
+│ id_entidad PK   │  │ id_hecho PK                   │  │ id_delito PK    │
 │ clave_entidad    │  │ id_tiempo FK                 │  │ tipo_delito      │
 │ nombre_entidad   │  │ id_entidad FK                │  │ subtipo_delito   │
 │ region           │  │ id_delito FK                 │  │ bien_juridico    │
-└──────────────────┘  │                              │  │ categoria        │
-                      │ num_victimas                 │  │ es_letal         │
-                      │ fuente                       │  └──────────────────┘
-                      │ fecha_carga                  │
-                      └──────────────────────────────┘
+└──────────────────┘  │                               │  │ categoria        │
+                      │ num_victimas                  │  │ es_letal         │
+                      │ fuente                        │  └──────────────────┘
+                      │ fecha_carga                   │
+                      └───────────────────────────────┘
 ```
 
 ### Decisiones de diseño
@@ -192,23 +170,169 @@ Cada registro de `fact_victimas` representa el número de víctimas registradas 
 
 ---
 
+## Cómo ejecutar
 
-## Dashboard propuesto
+### Requisitos previos
 
-| # | Visualización | Objetivo |
-|---|---|---|
-| 1 | **Evolución temporal de feminicidios por entidad federativa** (gráfica de líneas) | Identificar tendencias de crecimiento o disminución a lo largo del tiempo |
-| 2 | **Mapa coroplético de México** por incidencia acumulada de delitos contra las mujeres | Detectar concentración geográfica y entidades de alto riesgo |
-| 3 | **Ranking Top 10 entidades** con mayor incidencia acumulada (barras horizontales) | Comparar entidades y priorizar focos de atención |
-| 4 | **Variación porcentual anual** calculada con `LAG()` *(--)* | Detectar incrementos atípicos por estado y año |
+```bash
+pip install pandas sqlalchemy psycopg2-binary
+```
+
+### 1. Descargar el dataset
+
+1. Ir a: https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva
+2. Descargar: **"Estatal-Delitos-2015-2025"**
+3. Guardar en: `datasets/Estatal-Delitos-2015-2025_abr2026.csv`
+
+### 2. Crear el schema en Aurora
+
+```bash
+psql "postgresql://postgres:TU_PASSWORD@TU_HOST.rds.amazonaws.com:5432/northwind" \
+     -f scripts/01_schema_ddl.sql
+```
+
+### 3. Correr el ETL
+
+```bash
+export AURORA_HOST=TU_HOST.rds.amazonaws.com
+export AURORA_PASSWORD=TU_PASSWORD
+
+python scripts/etl_pipeline.py
+```
+
+### 4. Abrir el dashboard
+
+Abrir `dashboard/violencia_mujeres.pbix` en Power BI Desktop.
 
 ---
 
-## Hallazgos preliminares (se completará en la entrega final)
+## Estado actual de implementación
 
-*(Esta sección se completará con los resultados del dashboard tras cargar los datos completos 2015–2025.)*
+El modelo dimensional fue creado en AWS Aurora PostgreSQL dentro del schema `violencia_dwh`.
 
-Se espera identificar patrones temporales y geográficos en los delitos contra las mujeres, así como las entidades con mayor incidencia y crecimiento durante el periodo analizado. El uso de window functions y CTEs permitirá detectar tendencias que no son visibles en reportes estáticos.
+El ETL en Python se ejecutó correctamente contra Aurora y cargó:
+
+Dataset origen: 34,496 registros  
+Fact table final: 54,912 registros (tras la transformación ancho → largo y el filtrado de subtipos relevantes)
+
+| Tabla | Registros |
+|---|---:|
+| dim_tiempo | 132 |
+| dim_entidad | 32 |
+| dim_delito | 13 |
+| fact_victimas | 54,912 |
+
+Validaciones post-carga:
+
+- Llaves foráneas huérfanas: 0
+- Suma total de víctimas en origen: 5,763,371
+- Suma total de víctimas en Aurora: 5,763,371
+
+Esto confirma que la carga fue completa y consistente.
+
+---
+
+## SQL avanzado — técnicas aplicadas
+
+### 1. Window function — Ranking de entidades por feminicidios (`RANK`)
+```sql
+SELECT
+    de.nombre_entidad,
+    dt.anio,
+    SUM(fv.num_victimas) AS total_feminicidios,
+    RANK() OVER (
+        PARTITION BY dt.anio
+        ORDER BY SUM(fv.num_victimas) DESC
+    ) AS ranking_anual
+FROM violencia_dwh.fact_victimas fv
+JOIN violencia_dwh.dim_tiempo  dt USING (id_tiempo)
+JOIN violencia_dwh.dim_entidad de USING (id_entidad)
+JOIN violencia_dwh.dim_delito  dd USING (id_delito)
+WHERE dd.subtipo_delito = 'Feminicidio'
+GROUP BY de.nombre_entidad, dt.anio;
+```
+
+### 2. Window function — Variación año a año (`LAG`)
+```sql
+WITH anual AS (
+    SELECT
+        de.nombre_entidad,
+        dt.anio,
+        SUM(fv.num_victimas) AS total
+    FROM violencia_dwh.fact_victimas fv
+    JOIN violencia_dwh.dim_tiempo  dt USING (id_tiempo)
+    JOIN violencia_dwh.dim_entidad de USING (id_entidad)
+    JOIN violencia_dwh.dim_delito  dd USING (id_delito)
+    WHERE dd.es_letal = TRUE
+    GROUP BY de.nombre_entidad, dt.anio
+)
+SELECT
+    nombre_entidad,
+    anio,
+    total,
+    LAG(total) OVER (PARTITION BY nombre_entidad ORDER BY anio) AS anio_anterior,
+    ROUND(100.0 * (total - LAG(total) OVER (
+        PARTITION BY nombre_entidad ORDER BY anio)
+    ) / NULLIF(LAG(total) OVER (
+        PARTITION BY nombre_entidad ORDER BY anio), 0), 1) AS pct_cambio
+FROM anual
+ORDER BY pct_cambio DESC NULLS LAST;
+```
+
+### 3. CTE — Estados con mayor proporción de delitos letales
+```sql
+WITH totales AS (
+    SELECT
+        de.nombre_entidad,
+        SUM(fv.num_victimas)                                   AS total_delitos,
+        SUM(fv.num_victimas) FILTER (WHERE dd.es_letal = TRUE) AS delitos_letales
+    FROM violencia_dwh.fact_victimas fv
+    JOIN violencia_dwh.dim_entidad de USING (id_entidad)
+    JOIN violencia_dwh.dim_delito  dd USING (id_delito)
+    GROUP BY de.nombre_entidad
+)
+SELECT
+    nombre_entidad,
+    total_delitos,
+    delitos_letales,
+    ROUND(100.0 * delitos_letales / NULLIF(total_delitos, 0), 1) AS pct_letal
+FROM totales
+ORDER BY pct_letal DESC;
+```
+
+### 4. Función analítica — Percentil 90 por subtipo de delito (`PERCENTILE_CONT`)
+```sql
+SELECT
+    dd.subtipo_delito,
+    PERCENTILE_CONT(0.50) WITHIN GROUP (ORDER BY fv.num_victimas) AS mediana_mensual,
+    PERCENTILE_CONT(0.90) WITHIN GROUP (ORDER BY fv.num_victimas) AS p90_mensual
+FROM violencia_dwh.fact_victimas fv
+JOIN violencia_dwh.dim_delito dd USING (id_delito)
+GROUP BY dd.subtipo_delito
+ORDER BY p90_mensual DESC;
+```
+
+---
+
+## Dashboard en Power BI
+
+El dashboard se construye con los CSV exportados desde las consultas analíticas en DBeaver.
+
+Visualizaciones:
+
+1. Evolución temporal de feminicidios.
+2. Ranking de entidades con mayor incidencia acumulada.
+3. Incidencia acumulada por entidad federativa.
+4. Variación anual por entidad.
+5. Crecimiento anual por subtipo de delito.
+
+---
+
+## Hallazgos preliminares (se completará tras construir el dashboard)
+
+*(Esta sección se completará con el análisis de las visualizaciones de Power BI.)*
+
+Con los datos ya cargados en Aurora (54,912 registros, 5,763,371 víctimas totales en los 13 subtipos analizados), el siguiente paso es exportar los resultados de `queries_analiticas.sql` a CSV y construir las 5 visualizaciones del dashboard para identificar patrones temporales y geográficos, así como las entidades con mayor incidencia y crecimiento durante el periodo analizado.
 
 ---
 
@@ -216,4 +340,5 @@ Se espera identificar patrones temporales y geográficos en los delitos contra l
 
 - [SESNSP — Datos abiertos de incidencia delictiva](https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva)
 - [SESNSP — Informe de violencia contra las mujeres](https://www.gob.mx/sesnsp/documentos/informe-de-violencia-contra-las-mujeres)
-
+- Material del módulo 4 — IIMAS, UNAM: OLAP, ETL Python, SQL avanzado
+- Kimball, R. & Ross, M. — *The Data Warehouse Toolkit*, 3ª ed.
