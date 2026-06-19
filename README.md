@@ -1,7 +1,41 @@
 # Análisis de incidencia delictiva contra las mujeres por entidad federativa en México (2015–2025)
 
+
 > Proyecto Final · Módulo 4: Inteligencia de negocios y SQL avanzado  
-> Diplomado en Bases de Datos y Sistemas de Información — IIMAS, UNAM · 2025
+> Diplomado Manejo de bases de datos sql Y nosql en un entorno de nube. — IIMAS, UNAM.
+> **Alumna:** Karla Yoloxochitl Erazo Amaya
+
+---
+
+## Resumen ejecutivo
+
+| Campo | Valor |
+|---|---|
+| **Pregunta analítica** | ¿Cómo ha evolucionado la incidencia de los principales delitos contra las mujeres en México entre 2015 y 2025, y qué entidades federativas presentan los mayores niveles y tendencias de crecimiento? |
+| **Dataset** | Incidencia Delictiva Estatal (SESNSP) 2015–2025 |
+| **Fuente** | [sesnsp.gob.mx — Datos abiertos de incidencia delictiva estatal](https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva) |
+| **Modelo** | Estrella: 1 fact + 3 dimensiones (tiempo, entidad, delito) |
+| **Infraestructura** | AWS Aurora PostgreSQL — schema `violencia_dwh` |
+| **ETL** | Python (pandas + SQLAlchemy) |
+| **SQL avanzado** | Window functions (`RANK`, `LAG`), CTEs, funciones analíticas (`PERCENTILE_CONT`) |
+| **Dashboard** | Power BI |
+
+---
+
+## Problema y motivación
+
+La violencia contra las mujeres es uno de los principales problemas de seguridad y derechos humanos en México. En los últimos años, ha aumentado la cantidad de delitos como el feminicidio, el homicidio doloso, las lesiones dolosas y la violencia familiar.
+
+Las autoridades publican información sobre la incidencia delictiva de forma regular. Sin embargo, el gran volumen de datos dificulta la identificación de patrones territoriales y temporales.
+
+Este proyecto busca responder cuatro preguntas analíticas:
+
+1. ¿Qué entidades federativas concentran el mayor número de delitos contra las mujeres?
+2. ¿Cómo ha evolucionado la incidencia de estos delitos entre 2015 y 2025?
+3. ¿Hay estados donde el crecimiento de la violencia ha sido significativamente mayor que el promedio nacional?
+4. ¿Cuáles son los delitos que presentan las tendencias de crecimiento más preocupantes?
+
+La respuesta a estas preguntas permite identificar focos de atención para el diseño de políticas públicas y estrategias de prevención.
 
 ---
 
@@ -11,7 +45,7 @@
 **Descarga directa:** https://www.gob.mx/sesnsp/acciones-y-programas/datos-abiertos-de-incidencia-delictiva  
 **Archivo:** `Estatal-Delitos-2015-2025_abr2026.csv`
 
-El dataset contiene más de 8,800 registros de feminicidio entre 2015 y 2020, además de otros delitos contra las mujeres para las 32 entidades federativas, generando decenas de miles de observaciones para análisis temporal y geográfico.
+El dataset contiene más de 8,800 víctimas registradas por feminicidio durante el periodo analizado, además de otros delitos contra las mujeres para las 32 entidades federativas, generando decenas de miles de observaciones para análisis temporal y geográfico.
 
 ### Estructura del archivo fuente
 
@@ -99,13 +133,17 @@ El ETL filtra únicamente los subtipos relevantes para el análisis de violencia
 
 ```
 proyecto-violencia-mujeres/
+│
 ├── README.md
+│
 ├── datasets/
 │   └── Estatal-Delitos-2015-2025_abr2026.csv
+│
 ├── scripts/
 │   ├── 01_schema_ddl.sql
 │   ├── etl_pipeline.py
 │   └── queries_analiticas.sql
+│
 ├── dashboard/
 │   ├── violencia_mujeres.pbix
 │   └── data/
@@ -114,8 +152,13 @@ proyecto-violencia-mujeres/
 │       ├── mapa_entidades.csv
 │       ├── variacion_anual.csv
 │       └── crecimiento_delitos.csv
+│
 └── docs/
-    └── diagrama_modelo.png
+    ├── diagrama_modelo.png
+    ├── dashboard_pagina1.png
+    ├── dashboard_pagina2.png
+    ├── dashboard_pagina3.png
+    └── dashboard_pagina4.png
 ```
 
 ---
@@ -132,7 +175,7 @@ Cada registro de `fact_victimas` representa el número de víctimas registradas 
                     ┌──────────────────┐
                     │   dim_tiempo     │
                     │                  │
-                    │ id_tiempo PK    │
+                    │ id_tiempo PK     │
                     │ anio             │
                     │ mes              │
                     │ nombre_mes       │
@@ -143,17 +186,17 @@ Cada registro de `fact_victimas` representa el número de víctimas registradas 
                     └────────┬─────────┘
                              │
 ┌──────────────────┐  ┌──────┴───────────────────────┐  ┌──────────────────┐
-│   dim_entidad    │◄─│       fact_victimas           │─►│   dim_delito     │
-│                  │  │                               │  │                  │
-│ id_entidad PK   │  │ id_hecho PK                   │  │ id_delito PK    │
+│   dim_entidad    │◄─│       fact_victimas          │─►│   dim_delito     │
+│                  │  │                              │  │                  │
+│ id_entidad PK    │  │ id_hecho PK                  │  │ id_delito PK     │
 │ clave_entidad    │  │ id_tiempo FK                 │  │ tipo_delito      │
 │ nombre_entidad   │  │ id_entidad FK                │  │ subtipo_delito   │
 │ region           │  │ id_delito FK                 │  │ bien_juridico    │
-└──────────────────┘  │                               │  │ categoria        │
-                      │ num_victimas                  │  │ es_letal         │
-                      │ fuente                        │  └──────────────────┘
-                      │ fecha_carga                   │
-                      └───────────────────────────────┘
+└──────────────────┘  │                              │  │ categoria        │
+                      │ num_victimas                 │  │ es_letal         │
+                      │ fuente                       │  └──────────────────┘
+                      │ fecha_carga                  │
+                      └──────────────────────────────┘
 ```
 
 ### Decisiones de diseño
@@ -316,23 +359,58 @@ ORDER BY p90_mensual DESC;
 
 ## Dashboard en Power BI
 
-El dashboard se construye con los CSV exportados desde las consultas analíticas en DBeaver.
+El dashboard fue desarrollado en Power BI Desktop utilizando los resultados exportados desde las consultas analíticas ejecutadas en Aurora PostgreSQL.
 
-Visualizaciones:
+Incluye cuatro páginas con visualizaciones interactivas y filtros temporales:
 
-1. Evolución temporal de feminicidios.
-2. Ranking de entidades con mayor incidencia acumulada.
-3. Incidencia acumulada por entidad federativa.
-4. Variación anual por entidad.
-5. Crecimiento anual por subtipo de delito.
+### Página 1 — Evolución de Feminicidios
+
+![Dashboard Página 1](docs/dashboard_pagina1.png)
+
+Visualización de la evolución temporal de los feminicidios en México entre 2015 y 2025.
 
 ---
 
-## Hallazgos preliminares (se completará tras construir el dashboard)
+### Página 2 — Top 10 Entidades con Mayor Incidencia Acumulada
 
-*(Esta sección se completará con el análisis de las visualizaciones de Power BI.)*
+![Dashboard Página 2](docs/dashboard_pagina2.png)
 
-Con los datos ya cargados en Aurora (54,912 registros, 5,763,371 víctimas totales en los 13 subtipos analizados), el siguiente paso es exportar los resultados de `queries_analiticas.sql` a CSV y construir las 5 visualizaciones del dashboard para identificar patrones temporales y geográficos, así como las entidades con mayor incidencia y crecimiento durante el periodo analizado.
+Ranking de las entidades federativas con el mayor número acumulado de víctimas registradas durante el periodo analizado.
+
+---
+
+### Página 3 — Variación Anual de la Violencia Letal
+
+![Dashboard Página 3](docs/dashboard_pagina3.png)
+
+Análisis de la variación porcentual anual de los delitos letales por entidad federativa, permitiendo identificar estados con crecimientos o reducciones significativas.
+
+---
+
+### Página 4 — Evolución por Subtipo de Delito
+
+![Dashboard Página 4](docs/dashboard_pagina4.png)
+
+Comparación temporal de los principales delitos contra las mujeres, incluyendo feminicidio, violencia familiar, lesiones y delitos sexuales.
+
+Además, el dashboard incorpora filtros interactivos (slicers) para facilitar la exploración de los datos por periodo temporal.
+
+Estas visualizaciones permiten analizar tendencias, identificar entidades prioritarias y detectar patrones de crecimiento en distintos tipos de violencia contra las mujeres.
+
+
+---
+
+## Hallazgos principales
+
+El análisis de la incidencia delictiva contra las mujeres en México entre 2015 y 2025 permitió identificar patrones temporales y geográficos relevantes.
+
+- Los feminicidios presentaron una tendencia creciente entre 2015 y 2021, alcanzando sus niveles más altos durante ese periodo. A partir de 2022 se observa una disminución moderada en los registros.
+- El Estado de México, Ciudad de México, Guanajuato, Jalisco y Baja California concentran la mayor incidencia acumulada de delitos contra las mujeres durante el periodo analizado.
+- Existen diferencias significativas entre entidades federativas respecto al crecimiento de la violencia letal. Algunas entidades muestran incrementos porcentuales muy superiores al promedio nacional, mientras que otras presentan reducciones durante los años recientes.
+- La violencia familiar y las lesiones dolosas representan el mayor volumen de víctimas dentro de los delitos analizados, superando ampliamente a delitos letales como el feminicidio.
+- El uso de funciones analíticas como `RANK()`, `LAG()` y `PERCENTILE_CONT()` permitió identificar entidades con incrementos atípicos y delitos con comportamientos significativamente distintos al promedio nacional.
+
+Los resultados muestran que la violencia contra las mujeres presenta una distribución heterogénea entre entidades federativas y que existen tendencias diferenciadas según el tipo de delito, lo que refuerza la necesidad de políticas públicas focalizadas y estrategias de prevención específicas por región.
 
 ---
 
