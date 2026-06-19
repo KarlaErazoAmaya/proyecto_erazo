@@ -2,7 +2,7 @@
 
 
 > Proyecto Final · Módulo 4: Inteligencia de negocios y SQL avanzado  
-> Diplomado Manejo de bases de datos sql Y nosql en un entorno de nube. — IIMAS, UNAM.
+> Diplomado Manejo de bases de datos sql y nosql en un entorno de nube. — IIMAS, UNAM.    
 > **Alumna:** Karla Yoloxochitl Erazo Amaya
 
 ---
