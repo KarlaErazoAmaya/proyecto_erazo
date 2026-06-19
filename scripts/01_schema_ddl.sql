@@ -3,7 +3,7 @@
 -- Fuente: SESNSP — Incidencia Delictiva Estatal 2015–2025
 -- Módulo 4: Inteligencia de negocios y SQL avanzado
 -- Diplomado IIMAS, UNAM
--- Erazo A,aya Karla Yoloxochitl 
+-- Erazo Amaya Karla Yoloxochitl 
 -- =============================================================
 
 CREATE SCHEMA IF NOT EXISTS violencia_dwh;
